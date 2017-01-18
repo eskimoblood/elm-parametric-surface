@@ -4,13 +4,13 @@ import Math.Vector3 exposing (..)
 import Math.Vector2 exposing (Vec2)
 import Array exposing (Array)
 import WebGL exposing (..)
-import Dict exposing (Dict)
-
+import Color exposing(Color)
 
 type alias Point =
     { position : Vec3
     , normal : Vec3
     , coord : Vec2
+    , color: Vec3
     }
 
 
@@ -124,7 +124,7 @@ getPoint i points =
                 Debug.crash "Cant happen"
 
 
-toMesh : Int -> List { position : Vec3, coord : Vec2 } -> Drawable { position : Vec3, normal : Vec3, coord : Vec2 }
+toMesh : Int -> List { position : Vec3, coord : Vec2, color: Vec3 } -> Drawable { position : Vec3, normal : Vec3, coord : Vec2, color: Vec3 }
 toMesh height points =
     let
         mesh =
@@ -142,9 +142,9 @@ triangleToDrawable points ( p1, p2, p3 ) =
     )
 
 
-createPoint : List { position : Vec3, coord : Vec2 } -> Array Point
+createPoint : List { position : Vec3, coord : Vec2, color: Vec3 } -> Array Point
 createPoint vecs =
-    List.map (\v -> { normal = vec3 1 1 1, position = v.position, coord = v.coord }) vecs
+    List.map (\v -> { normal = vec3 1 1 1, position = v.position, coord = v.coord, color=v.color }) vecs
         |> Array.fromList
 
 

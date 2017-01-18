@@ -47,7 +47,7 @@ subscriptions model =
 main =
     Html.program
         { init = ( initialModel, Cmd.none )
-        , view = scene >> WebGL.toHtmlWith [ Enable Blend, BlendFunc ( SrcAlpha, OneMinusSrcAlpha ) ] [ width 1000, height 1000 ]
+        , view = scene >> WebGL.toHtml  [ width 1000, height 1000 ]
         , subscriptions = subscriptions
         , update = update
         }
@@ -58,7 +58,7 @@ main =
 
 
 s =
-    (surface (SuperShape 1 1.6 3 5 1 1.7 -5 -1.2 6 5.7) 90 90)
+    (surface (SuperShape 0.6 1.312 8 20 8 3 30 5 2 2) 100 100)
 
 
 
@@ -79,34 +79,38 @@ uniforms x y =
     }
 
 
-
 -- SHADERS
 
 
-vertexShader : Shader { attr | position : Vec3, normal : Vec3, coord : Vec2 } { unif | rotation : Mat4, perspective : Mat4, camera : Mat4 } { vertPos : Vec3, normalInterp : Vec3, c : Vec2 }
+vertexShader : Shader { attr | position : Vec3, normal : Vec3, coord : Vec2, color: Vec3 } { unif | rotation : Mat4, perspective : Mat4, camera : Mat4 } { vertPos : Vec3, normalInterp : Vec3, c : Vec2, cl: Vec3 }
 vertexShader =
     [glsl|
 
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 coord;
+attribute vec3 color;
+
 uniform mat4 camera, perspective, rotation;
 
 varying vec3 normalInterp;
 varying vec3 vertPos;
 varying vec2 c;
+varying vec3 cl;
+
 
 void main(){
     gl_Position = perspective * camera * rotation * vec4(position, 1.0);
     vertPos = position;
     normalInterp = normal;
     c = coord;
+    cl = color;
 }
 
 |]
 
 
-fragmentShader : Shader {} { u | shade : Float } { vertPos : Vec3, normalInterp : Vec3, c : Vec2 }
+fragmentShader : Shader {} { u | shade : Float } { vertPos : Vec3, normalInterp : Vec3, c : Vec2, cl: Vec3 }
 fragmentShader =
     [glsl|
 
@@ -115,13 +119,15 @@ precision mediump float;
 varying vec3 normalInterp;
 varying vec3 vertPos;
 varying vec2 c;
+varying vec3 cl;
+
 
 const int mode = 2;
 
 const vec3 lightPos = vec3(1.0,1.0,1.0);
-const vec3 ambientColor = vec3(0.1, 0.0, 0.0);
-const vec3 diffuseColor = vec3(0.5, 0.1, 0.1);
-const vec3 specColor = vec3(1.0, 1.0, 1.0);
+const vec3 ambientColor = vec3(1, 0.0, 0.0);
+const vec3 diffuseColor = vec3(0.2, 0.2, 0.2);
+const vec3 specColor = vec3(0.3, 0.3, 0.2);
 
 float modI(float a,float b) {
     float m=a-floor((a+0.5)/b)*b;
@@ -153,20 +159,10 @@ void main() {
       specular = pow(specAngle, 4.0);
     }
   }
-vec3 cl;
-float a ;
-  float x = (floor(c.x * 0.5));
-	float y = (floor(c.y * 1.0));
-	if (modI(x/y+normal.x, 2.0) == 0.0) {
-		 cl = vec3(0.3, 0.3, 0.3);
-a=1.0;
-	} else {
-		 cl = vec3(0.4, 0.4, 0.1);
-         a =0.0;
-	}
 
-  gl_FragColor = vec4(cl +
+
+  gl_FragColor = vec4( cl +
                       lambertian * diffuseColor +
-                      specular * specColor, a);
+                      specular * specColor, 1.0);
 }
 |]
